@@ -52,6 +52,7 @@ WL.registerComponent('play-again-button', {
         score = 0;
         updateCounter();
         updateScore(`Eliminate all ${maxTargets} rats.`);
+        firstShot = false;
 
         this.hide();
     },

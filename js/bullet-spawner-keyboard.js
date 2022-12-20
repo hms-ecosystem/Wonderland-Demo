@@ -10,20 +10,24 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-var bulletSpawner = null;
+var bulletSpawnerKeyboard = null;
 var shotCount = 0;
 var firstShot = false;
 /**
-@brief Spawns a new bullet object when the player depresses the trigger.
+@brief Spawns a new bullet object when the player presses the spacebar.
 */
-WL.registerComponent('bullet-spawner', {
+WL.registerComponent('bullet-spawner-keyboard', {
     bulletMesh: {type: WL.Type.Mesh},
     bulletMaterial: {type: WL.Type.Material},
     bulletSpeed: {type: WL.Type.Float, default: 1.0},
 }, {
-    start: function() {
-        WL.onXRSessionStart.push(this.xrSessionStart.bind(this));
+    init: function(){
+        this.spacebar = false;
 
+        window.addEventListener('keydown', this.press.bind(this));
+        window.addEventListener('keyup', this.release.bind(this));
+    },
+    start: function() {
         this.bullets = [];
         this.nextIndex = 0;
         this.lastShotTime = 0;
@@ -31,21 +35,24 @@ WL.registerComponent('bullet-spawner', {
         bulletSpawner = this.object;
         this.soundClick = this.object.addComponent('howler-audio-source', {src: 'sfx/9mm-pistol-shoot-short-reverb-7152.mp3', volume: 0.5 });
     },
-    onTouchDown: function(e) {
-        /** Prevent left trigger from firing */
-        if(e.inputSource.handedness=="right"){
-            /** Limit how fast player can shoot */
+
+    update: function(){
+        if(this.spacebar){
             let currentTime = Date.now();
             let lastShotTimeGap = Math.abs(currentTime-this.lastShotTime);
 
             if(lastShotTimeGap>500){
-                const dir = [0, 0, 0];
-                this.object.getComponent('cursor-custom').cursorRayObject.getForward(dir);
+                try{
+                    const dir = [0, 0, 0];
+                    this.object.getForward(dir);
 
-                this.pulse(e.inputSource.gamepad);
-                this.launch(dir);
-                this.lastShotTime=currentTime;
-                this.soundClick.play();
+                    this.launch(dir);
+                    this.lastShotTime=currentTime;
+                    this.soundClick.play();
+                }catch(e){
+                    console.log("keyboard shoot >> ", e);
+                }
+                
             }
         }
     },
@@ -95,22 +102,15 @@ WL.registerComponent('bullet-spawner', {
             physics: physics
         };
     },
-    //vibrates controller for haptic feedback
-    pulse: function (gamepad) {
-        let actuator;
-        if (!gamepad || !gamepad.hapticActuators) { return; }        
-        actuator = gamepad.hapticActuators[0];
-        if(!actuator) return;
-        actuator.pulse(1, 100);        
-    },
-    onActivate: function() {
-        if(WL.xrSession) {
-            WL.xrSession.addEventListener('selectstart', this.onTouchDown.bind(this));
+    press: function(e) {
+        if (e.keyCode === 32 /* spacebar */) {
+            this.spacebar = true;
         }
     },
-    xrSessionStart: function(session) {
-        if(this.active) {
-            session.addEventListener('selectstart', this.onTouchDown.bind(this));
+
+    release: function(e) {
+        if (e.keyCode === 32 /* spacebar */ ) {
+            this.spacebar = false;
         }
     },
 });

@@ -31,7 +31,6 @@ WL.registerComponent('bullet-physics', {
         if(!this.collision) {
             console.warn("'bullet-physics' component on object", this.object.name, "requires a collision component");
         }
-        
     },
     update: function(dt) {
         //error checking?
